@@ -13,7 +13,7 @@ This repository contains a Packet Tracer lab demonstrating practical network sec
 - Access-layer hardening (where configured): PortFast + BPDU Guard, port-security (sticky MAC), trunk hardening (native VLAN 99, DTP disabled)
 
 ## Topology
-![Packet Tracer topology](Topology_PK.png)
+![Packet Tracer topology](Topology.png)
 
 High-level structure:
 - R1 (Site A) ↔ R2 (Transit) ↔ R3 (Site B)
@@ -56,7 +56,7 @@ Repozytorium zawiera laboratorium Packet Tracer pokazujące praktyczne mechanizm
 - Utwardzenie warstwy dostępowej (tam gdzie skonfigurowane): PortFast + BPDU Guard, port-security (sticky MAC), hardening trunków (native VLAN 99, wyłączone DTP)
 
 ## Topologia
-![Topologia Packet Tracer](Topology_PK.png)
+![Topologia Packet Tracer](Topology.png)
 
 Struktura (wysoki poziom):
 - R1 (Site A) ↔ R2 (Tranzyt) ↔ R3 (Site B)
