@@ -2,7 +2,7 @@
 
 Projekt sieci kampusowej w architekturze 3-tier (Core / Distribution / Access) zrealizowany w Cisco Packet Tracer. Topologia obejmuje dwa budynki (A i B), redundancję w warstwie Core/Distribution oraz segmentację usług: DATA / VOICE / Wi-Fi / MGMT / SERVERS.
 
-## TL;DR (CV summary)
+Summary:
 Zaimplementowane: VLAN + trunking, Inter-VLAN routing (SVI), OSPF area 0 (p2p /30), centralny DHCP + DHCP relay, NAT (PAT + static NAT), Rapid-PVST root split, EtherChannel (LACP/PAgP), L2 security (DHCP snooping, DAI, port-security, BPDU Guard), VoIP (voice VLAN), podstawy WLAN (WLC + AP), IPv6.
 
 ![Topologia](Topology.png)
