@@ -1,83 +1,149 @@
-# Network Security Lab (Packet Tracer): IPsec S2S + OSPF (HMAC) + VLAN Segmentation
+# Projekt sieci kampusowej 3-tier (Core / Distribution / Access) — Cisco Packet Tracer
 
-Author: Antoni Gąsiorowski
+Projekt sieci kampusowej w architekturze 3-tier (Core / Distribution / Access) zrealizowany w Cisco Packet Tracer. Topologia obejmuje dwa budynki (A i B), redundancję w warstwie Core/Distribution oraz segmentację usług: DATA / VOICE / Wi-Fi / MGMT / SERVERS.
 
-## Overview
-This repository contains a Packet Tracer lab demonstrating practical network security controls in a small routed environment:
-- Site-to-Site IPsec VPN protecting traffic between Site A (192.168.1.0/24) and Site B VLAN 3 (172.16.3.0/24) using AES-256, ESP-AES-256/ESP-SHA-HMAC, and PFS group5
-- OSPF Area 0 for dynamic routing across WAN links
-- OSPF adjacency authentication (key-chain with HMAC-SHA-256) on the transit link
-- VLAN segmentation at Site B using router-on-a-stick on R3:
-  - VLAN 3: 172.16.3.0/24
-  - VLAN 33: 172.16.33.0/24
-- Access-layer hardening (where configured): PortFast + BPDU Guard, port-security (sticky MAC), trunk hardening (native VLAN 99, DTP disabled)
-
-## Topology
-![Packet Tracer topology](Topology.png)
-
-High-level structure:
-- R1 (Site A) ↔ R2 (Transit) ↔ R3 (Site B)
-- Site A LAN behind R1: 192.168.1.0/24
-- Site B VLANs behind R3: 172.16.3.0/24 (VLAN 3) and 172.16.33.0/24 (VLAN 33)
-
-## Key Security Controls
-### IPsec Site-to-Site VPN
-- IKE policy: AES-256, pre-shared key, DH group 5
-- IPsec transform-set: ESP-AES-256 + ESP-SHA-HMAC
-- PFS: group5
-- Interesting traffic is scoped with extended ACLs:
-  - 192.168.1.0/24 ↔ 172.16.3.0/24
-
-### OSPF Security (Control Plane)
-- OSPF is enabled across WAN links (Area 0)
-- Key-chain authentication (HMAC-SHA-256) is applied on the R2–R3 adjacency to reduce the risk of routing protocol spoofing/poisoning
-
-### Segmentation (Data Plane)
-- Two L2 segments at Site B (VLAN 3 and VLAN 33) terminate on R3 802.1Q subinterfaces
-- Switch management SVIs are placed in VLAN 3 (172.16.3.0/24)
-
-## Limitations (Packet Tracer)
-Packet Tracer does not fully match feature parity of real IOS/CSR images (e.g., some Zone-Based Firewall behaviors on 802.1Q subinterfaces). This lab focuses on controls that are consistently demonstrable in PT: IPsec, OSPF authentication, VLAN segmentation, and access-layer hardening.
+![Topologia](Topology.png)
 
 ---
 
-# Laboratorium Network Security (Packet Tracer): IPsec S2S + OSPF (HMAC) + Segmentacja VLAN
+## Zakres funkcjonalny
 
-Autor: Antoni Gąsiorowski
+Zaimplementowane elementy:
 
-## Opis
-Repozytorium zawiera laboratorium Packet Tracer pokazujące praktyczne mechanizmy bezpieczeństwa w małej sieci routowanej:
-- Tunel Site-to-Site IPsec chroniący ruch między Site A (192.168.1.0/24) a Site B VLAN 3 (172.16.3.0/24) z użyciem AES-256, ESP-AES-256/ESP-SHA-HMAC oraz PFS group5
-- OSPF Area 0 do routingu dynamicznego na łączach WAN
-- Uwierzytelnianie sąsiedztwa OSPF (key-chain z HMAC-SHA-256) na łączu tranzytowym
-- Segmentacja VLAN w Site B z router-on-a-stick na R3:
-  - VLAN 3: 172.16.3.0/24
-  - VLAN 33: 172.16.33.0/24
-- Utwardzenie warstwy dostępowej (tam gdzie skonfigurowane): PortFast + BPDU Guard, port-security (sticky MAC), hardening trunków (native VLAN 99, wyłączone DTP)
+- VLAN + trunking
+- Inter-VLAN routing (SVI)
+- OSPF (area 0, routed links /30)
+- Centralny DHCP na routerze brzegowym + DHCP relay (ip helper-address)
+- NAT: PAT (overload) + static NAT
+- Rapid-PVST + root split (distribution)
+- EtherChannel (PAgP/LACP)
+- L2 security: DHCP Snooping, DAI, Port-Security, BPDU Guard (+ PortFast)
+- VoIP: voice VLAN (Cisco 7960)
+- WLAN: podstawy (WLC + AP)
+- IPv6: na uplinkach (z trasami domyślnymi primary/backup)
 
-## Topologia
-![Topologia Packet Tracer](Topology.png)
+---
 
-Struktura (wysoki poziom):
-- R1 (Site A) ↔ R2 (Tranzyt) ↔ R3 (Site B)
-- LAN w Site A za R1: 192.168.1.0/24
-- VLANy w Site B za R3: 172.16.3.0/24 (VLAN 3) oraz 172.16.33.0/24 (VLAN 33)
+## Architektura
 
-## Kluczowe mechanizmy bezpieczeństwa
-### IPsec Site-to-Site
-- Polityka IKE: AES-256, pre-shared key, DH group 5
-- Transform-set IPsec: ESP-AES-256 + ESP-SHA-HMAC
-- PFS: group5
-- Zakres szyfrowanego ruchu (interesting traffic) ograniczony ACL:
-  - 192.168.1.0/24 ↔ 172.16.3.0/24
+### Edge
+- R1 (2911) — router brzegowy z dwoma łączami do ISP (primary/backup)
+- Usługi: DHCP, NAT (PAT + static NAT), OSPF + default route, IPv6 + default IPv6 (primary/backup)
 
-### Bezpieczeństwo OSPF (control plane)
-- OSPF działa na łączach WAN (Area 0)
-- Key-chain authentication (HMAC-SHA-256) na sąsiedztwie R2–R3 ogranicza ryzyko spoofingu/poisoningu protokołu routingu
+### Core
+- CSW1, CSW2 (3650) — L3 core (ip routing), routed links /30, OSPF area 0
 
-### Segmentacja (data plane)
-- Dwa segmenty L2 w Site B (VLAN 3 i VLAN 33) terminują na subinterfejsach 802.1Q na R3
-- Zarządzanie switchami (SVI) jest w VLAN 3 (172.16.3.0/24)
+### Distribution
+- Budynek A: DSW-A1, DSW-A2 (3650) — SVI + inter-VLAN routing, OSPF uplinki do Core, Rapid-PVST root split, EtherChannel do Access
+- Budynek B: DSW-B1, DSW-B2 (3650) — SVI + inter-VLAN routing, OSPF uplinki do Core, Rapid-PVST root split, EtherChannel do Access
 
-## Ograniczenia (Packet Tracer)
-Packet Tracer nie ma pełnej zgodności funkcji z realnymi obrazami IOS/CSR (np. ograniczenia Zone-Based Firewall na subinterfejsach 802.1Q). Laboratorium koncentruje się na mechanizmach, które da się konsekwentnie pokazać w PT: IPsec, uwierzytelnianie OSPF, segmentacja VLAN i hardening warstwy dostępowej.
+### Access
+- Budynek A: ASW-A1/A2/A3 (2960) — hardening L2, porty data/voice, uplinki trunk
+- Budynek B: ASW-B1/B2 (2960) — hardening L2, porty data/voice, port serwerowy w VLAN 30
+- Dodatkowo: WLC1, LWAP1, SRV1, hosty (PC/Laptop), telefony Cisco 7960
+
+---
+
+## VLAN & plan adresacji
+
+### Budynek A (SVI na DSW-A1/DSW-A2)
+
+| VLAN | Rola | Subnet | DSW-A1 SVI | DSW-A2 SVI |
+|---:|---|---|---|---|
+| 10 | A-PC (DATA) | 10.1.0.0/24 | 10.1.0.2 | 10.1.0.3 |
+| 20 | A-Phone (VOICE) | 10.2.0.0/24 | 10.2.0.2 | 10.2.0.3 |
+| 40 | Wi-Fi | 10.6.0.0/24 | 10.6.0.2 | 10.6.0.3 |
+| 99 | A-MGMT | 10.0.0.0/28 | 10.0.0.2 | 10.0.0.3 |
+
+### Budynek B (SVI na DSW-B1/DSW-B2)
+
+| VLAN | Rola | Subnet | DSW-B1 SVI | DSW-B2 SVI |
+|---:|---|---|---|---|
+| 10 | B-PC (DATA) | 10.3.0.0/24 | 10.3.0.2 | 10.3.0.3 |
+| 20 | B-Phone (VOICE) | 10.4.0.0/24 | 10.4.0.2 | 10.4.0.3 |
+| 30 | SERVERS | 10.5.0.0/24 | 10.5.0.2 | 10.5.0.3 |
+| 99 | B-MGMT | 10.0.0.16/28 | 10.0.0.18 | 10.0.0.19 |
+
+---
+
+## DHCP
+
+Centralny DHCP działa na R1. Przełączniki Distribution wykonują DHCP relay przez ip helper-address.
+
+- DNS: 10.5.0.4
+- Domena: MyITProject
+- Dodatkowo: Option 43 w puli A-MGMT (AP/WLC discovery)
+
+---
+
+## NAT + Internet
+
+- Dwa łącza do ISP (primary/backup) + statyczne trasy domyślne (backup AD=2)
+- PAT (overload) przez pulę publiczną 203.0.113.200–203.0.113.207/29
+- Static NAT: 10.5.0.4 → 203.0.113.113
+
+---
+
+## STP & EtherChannel
+
+### Rapid-PVST root split
+
+Budynek A
+- DSW-A1: root primary dla VLAN 10, 99
+- DSW-A2: root primary dla VLAN 20, 40
+
+Budynek B
+- DSW-B1: root primary dla VLAN 10, 99
+- DSW-B2: root primary dla VLAN 20, 30
+
+### EtherChannel
+
+- Budynek A: Po1 (PAgP desirable), trunk, native VLAN 1000, allowed 10/20/40/99
+- Budynek B: Po1 (LACP active), trunk, native VLAN 1000, allowed 10/20/30/99
+
+### Hardening (Access)
+
+- PortFast + BPDU Guard
+- Uplinki trunk: switchport nonegotiate
+- Porty przykładowe:
+  - ASW-A2/ASW-A3/ASW-B1: access VLAN 10 + voice VLAN 20 (PC + IP Phone)
+  - ASW-B2: access VLAN 30 (port serwerowy)
+
+---
+
+## Plan testów
+
+L2 / VLAN / EtherChannel
+- show vlan brief
+- show interfaces trunk
+- show etherchannel summary
+
+STP
+- show spanning-tree vlan 10
+- show spanning-tree vlan 20
+- show spanning-tree vlan 30
+- show spanning-tree vlan 40
+
+OSPF / routing
+- show ip ospf neighbor (Core/Distribution; stan FULL)
+- show ip route (trasa domyślna 0.0.0.0/0 rozgłaszana z R1)
+
+DHCP
+- Hosty w VLAN 10/30 dostają adresy z właściwych pul + DNS 10.5.0.4
+
+E2E
+- Inter-VLAN: PC (VLAN10) ↔ SRV1 (VLAN30)
+- A ↔ B: ICMP 10.1.0.0/24 → 10.3.0.0/24
+- Internet: NAT + show ip nat translations na R1
+
+---
+
+## Limitations (Packet Tracer)
+
+- Brak użycia HSRP/VRRP ze względu na ograniczenia/niestabilność wsparcia w Packet Tracer. Redundancja: podwójny Core/Distribution, OSPF oraz STP root split.
+
+---
+
+## Autor
+
+Antoni Gąsiorowski
