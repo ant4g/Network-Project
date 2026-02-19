@@ -1,3 +1,13 @@
+# Campus Network 3-tier (Core / Distribution / Access) — Cisco Packet Tracer
+
+A campus network project built in a 3-tier architecture (Core / Distribution / Access) using Cisco Packet Tracer. The topology includes two buildings (A and B), redundancy at the Core/Distribution layers, and service segmentation: DATA / VOICE / Wi-Fi / MGMT / SERVERS.
+
+Implemented: VLAN + trunking, Inter-VLAN routing (SVI), OSPF area 0 (routed /30 links), centralized DHCP + DHCP relay (ip helper-address), NAT (PAT + static NAT), Rapid-PVST root split, EtherChannel (PAgP/LACP), L2 security (DHCP snooping, DAI, port-security, BPDU Guard), VoIP (voice VLAN), WLAN basics (WLC + AP), IPv6 on uplinks.
+
+![Topology](Topology.png)
+
+---
+
 # Projekt sieci kampusowej 3-tier (Core / Distribution / Access) — Cisco Packet Tracer
 
 Projekt sieci kampusowej w architekturze 3-tier (Core / Distribution / Access) zrealizowany w Cisco Packet Tracer. Topologia obejmuje dwa budynki (A i B), redundancję w warstwie Core/Distribution oraz segmentację usług: DATA / VOICE / Wi-Fi / MGMT / SERVERS.
@@ -98,52 +108,4 @@ Budynek B
 
 ### EtherChannel
 
-- Budynek A: Po1 (PAgP desirable), trunk, native VLAN 1000, allowed 10/20/40/99
-- Budynek B: Po1 (LACP active), trunk, native VLAN 1000, allowed 10/20/30/99
-
-### Hardening (Access)
-
-- PortFast + BPDU Guard
-- Uplinki trunk: switchport nonegotiate
-- Porty przykładowe:
-  - ASW-A2/ASW-A3/ASW-B1: access VLAN 10 + voice VLAN 20 (PC + IP Phone)
-  - ASW-B2: access VLAN 30 (port serwerowy)
-
----
-
-## Plan testów
-
-L2 / VLAN / EtherChannel
-- show vlan brief
-- show interfaces trunk
-- show etherchannel summary
-
-STP
-- show spanning-tree vlan 10
-- show spanning-tree vlan 20
-- show spanning-tree vlan 30
-- show spanning-tree vlan 40
-
-OSPF / routing
-- show ip ospf neighbor (Core/Distribution; stan FULL)
-- show ip route (trasa domyślna 0.0.0.0/0 rozgłaszana z R1)
-
-DHCP
-- Hosty w VLAN 10/30 dostają adresy z właściwych pul + DNS 10.5.0.4
-
-E2E
-- Inter-VLAN: PC (VLAN10) ↔ SRV1 (VLAN30)
-- A ↔ B: ICMP 10.1.0.0/24 → 10.3.0.0/24
-- Internet: NAT + show ip nat translations na R1
-
----
-
-## Limitations (Packet Tracer)
-
-- Brak użycia HSRP/VRRP ze względu na ograniczenia/niestabilność wsparcia w Packet Tracer. Redundancja: podwójny Core/Distribution, OSPF oraz STP root split.
-
----
-
-## Autor
-
-Antoni Gąsiorowski
+- Budynek A: Po1 (PAgP de
