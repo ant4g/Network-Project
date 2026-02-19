@@ -111,36 +111,110 @@ Building B
 
 ---
 
-## Test plan
+## Quick verification (single checklist)
 
-L2 / VLAN / EtherChannel
+Below are example outputs captured from this project (R1) to confirm routing, reachability, and NAT behavior. Use them as a reference for what “good” looks like, then re-run the same commands in your lab.
+
+### OSPF / routing (R1)
+
+Command:
+show ip ospf neighbor
+
+Example output:
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+10.0.0.77         0   FULL/  -        00:00:34    10.0.0.34       GigabitEthernet0/0
+10.0.0.78         0   FULL/  -        00:00:34    10.0.0.38       GigabitEthernet0/1
+
+Command:
+show ip route | include 0.0.0.0
+
+Example output:
+Gateway of last resort is 203.0.113.1 to network 0.0.0.0
+S*   0.0.0.0/0 [1/0] via 203.0.113.1
+
+Command:
+ping 10.5.0.4
+
+Example output:
+!!!!!
+Success rate is 100 percent (5/5)
+
+### Interfaces (R1)
+
+Command:
+show ip int brief
+
+Example output:
+Interface              IP-Address      OK? Method Status                Protocol 
+GigabitEthernet0/0     10.0.0.33       YES manual up                    up 
+GigabitEthernet0/1     10.0.0.37       YES manual up                    up 
+GigabitEthernet0/0/0   203.0.113.2     YES manual up                    up 
+GigabitEthernet0/1/0   203.0.113.6     YES manual up                    up 
+Loopback0              10.0.0.76       YES manual up                    up 
+
+### NAT (R1)
+
+Step: generate traffic from an inside host (example: 10.1.0.14) to an upstream target (example: 203.0.113.1)
+ping 203.0.113.1
+
+Then verify NAT on R1:
+
+Command:
+show ip nat translations
+
+Example output:
+Pro  Inside global     Inside local       Outside local      Outside global
+icmp 203.0.113.201:1   10.1.0.14:1        203.0.113.1:1      203.0.113.1:1
+icmp 203.0.113.201:2   10.1.0.14:2        203.0.113.1:2      203.0.113.1:2
+icmp 203.0.113.201:3   10.1.0.14:3        203.0.113.1:3      203.0.113.1:3
+icmp 203.0.113.201:4   10.1.0.14:4        203.0.113.1:4      203.0.113.1:4
+---  203.0.113.113     10.5.0.4           ---                ---
+
+Command:
+show ip nat statistics
+
+Example output:
+Total translations: 5 (1 static, 4 dynamic, 4 extended)
+Outside Interfaces: GigabitEthernet0/0/0 , GigabitEthernet0/1/0
+Inside Interfaces: GigabitEthernet0/0 , GigabitEthernet0/1
+Hits: 4  Misses: 87
+Dynamic mappings:
+-- Inside Source
+access-list 2 pool POOL1 refCount 4
+ pool POOL1: netmask 255.255.255.248
+       start 203.0.113.200 end 203.0.113.207
+       type generic, total addresses 8 , allocated 1 (12%), misses 0
+
+### DHCP (end-host)
+
+PC -> Desktop -> IP Configuration -> DHCP
+
+Expected:
+- correct IP address from the right pool
+- correct default gateway (SVI)
+- DNS set to 10.5.0.4
+
+### Layer 2 spot checks (Access/Distribution)
+
 - show vlan brief
 - show interfaces trunk
 - show etherchannel summary
-
-STP
 - show spanning-tree vlan 10
 - show spanning-tree vlan 20
 - show spanning-tree vlan 30
 - show spanning-tree vlan 40
 
-OSPF / routing
-- show ip ospf neighbor (Core/Distribution; FULL)
-- show ip route (check default route 0.0.0.0/0 advertised by R1)
-
-DHCP
-- Hosts in VLAN 10/30 receive addresses from correct pools + DNS 10.5.0.4
-
-E2E
-- Inter-VLAN: PC (VLAN10) ↔ SRV1 (VLAN30)
-- A ↔ B: ICMP 10.1.0.0/24 → 10.3.0.0/24
-- Internet: NAT + show ip nat translations on R1
+Expected:
+- VLANs present and trunks carry the correct VLAN list
+- Port-Channel up and member ports bundled
+- STP root split matches the design per VLAN
 
 ---
 
 ## Limitations (Packet Tracer)
 
 - HSRP/VRRP is not used due to Packet Tracer limitations/instability. Redundancy is provided by dual Core/Distribution, OSPF, and STP root split.
+- ACL on SVI: Packet Tracer does not reliably accept/apply ip access-group on interface Vlan10 (SVI) in this topology, so enforcing an A -> B policy via an SVI ACL may not be possible.
 
 ---
 
@@ -224,7 +298,7 @@ Centralny DHCP działa na R1. Przełączniki Distribution wykonują DHCP relay p
 
 - DNS: 10.5.0.4
 - Domena: MyITProject
-- Dodatkowo: Option 43 w puli A-MGMT (AP/WLC discovery)
+- Option 43 w puli A-MGMT (AP/WLC discovery)
 
 ---
 
@@ -263,36 +337,10 @@ Budynek B
 
 ---
 
-## Plan testów
-
-L2 / VLAN / EtherChannel
-- show vlan brief
-- show interfaces trunk
-- show etherchannel summary
-
-STP
-- show spanning-tree vlan 10
-- show spanning-tree vlan 20
-- show spanning-tree vlan 30
-- show spanning-tree vlan 40
-
-OSPF / routing
-- show ip ospf neighbor (Core/Distribution; stan FULL)
-- show ip route (trasa domyślna 0.0.0.0/0 rozgłaszana z R1)
-
-DHCP
-- Hosty w VLAN 10/30 dostają adresy z właściwych pul + DNS 10.5.0.4
-
-E2E
-- Inter-VLAN: PC (VLAN10) ↔ SRV1 (VLAN30)
-- A ↔ B: ICMP 10.1.0.0/24 → 10.3.0.0/24
-- Internet: NAT + show ip nat translations na R1
-
----
-
 ## Ograniczenia (Packet Tracer)
 
 - Brak użycia HSRP/VRRP ze względu na ograniczenia/niestabilność wsparcia w Packet Tracer. Redundancja: podwójny Core/Distribution, OSPF oraz STP root split.
+
 
 ---
 
